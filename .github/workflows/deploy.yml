@@ -38,6 +38,3 @@ jobs:
           local-dir: ./
           server-dir: /
 
-      # Step 6: Clean up (optional)
-      - name: Cleanup
-        run: npm run clean # (optional) Add a script to clean up your project if needed
