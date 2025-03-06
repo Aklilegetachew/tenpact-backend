@@ -36,7 +36,7 @@ jobs:
           ftp-username: ${{ secrets.FTP_USERNAME }} # Your FTP username
           ftp-password: ${{ secrets.FTP_PASSWORD }} # Your FTP password
           local-dir: ./ # The directory you want to deploy (e.g., `./` to deploy the whole repo)
-          remote-dir: /public_html/your_app # The remote directory on cPanel where your app will be deployed
+          remote-dir: / # The remote directory on cPanel where your app will be deployed
           git-ftp-args: --insecure # Optional: in case your FTP server uses an insecure connection
 
       # Step 6: Clean up (optional)
