@@ -30,14 +30,13 @@ jobs:
 
       # Step 5: Upload to cPanel via FTP
       - name: Deploy to cPanel via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
-          ftp-server: ${{ secrets.FTP_SERVER }} # Your FTP server (e.g., ftp.yoursite.com)
-          ftp-username: ${{ secrets.FTP_USERNAME }} # Your FTP username
-          ftp-password: ${{ secrets.FTP_PASSWORD }} # Your FTP password
-          local-dir: ./ # The directory you want to deploy (e.g., `./` to deploy the whole repo)
-          remote-dir: / # The remote directory on cPanel where your app will be deployed
-          git-ftp-args: --insecure # Optional: in case your FTP server uses an insecure connection
+          server: ftp.tenpactdevelopers.com # Replace with your FTP server address
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: /
 
       # Step 6: Clean up (optional)
       - name: Cleanup
