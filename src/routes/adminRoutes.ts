@@ -14,7 +14,7 @@ adminRouter.post("/floors", async (req: Request, res: Response) => {
 
   try {
     const [result] = await pool.execute<ResultSetHeader>(
-      "INSERT INTO floors (name, floorNumber) VALUES (?, ?)",
+      "INSERT INTO floor (name, floorNumber) VALUES (?, ?)",
       [name, floorNumber]
     );
     res.status(201).json({ id: result.insertId, name, floorNumber });
@@ -29,7 +29,7 @@ adminRouter.post("/shops", async (req: Request, res: Response) => {
 
   try {
     const [result] = await pool.execute<ResultSetHeader>(
-      "INSERT INTO shops (shopNumber, size, floorId) VALUES (?, ?, ?)",
+      "INSERT INTO shop (shopNumber, size, floorId) VALUES (?, ?, ?)",
       [shopNumber, size, floorId]
     );
     res.status(201).json({ id: result.insertId, shopNumber, size, floorId });
@@ -43,8 +43,8 @@ adminRouter.delete("/floors/:id", async (req: Request, res: Response) => {
   const id = req.params.id;
 
   try {
-    await pool.execute("DELETE FROM shops WHERE floorId = ?", [id]);
-    await pool.execute("DELETE FROM floors WHERE id = ?", [id]);
+    await pool.execute("DELETE FROM shop WHERE floorId = ?", [id]);
+    await pool.execute("DELETE FROM floor WHERE id = ?", [id]);
     res.status(200).json({ message: "Floor deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Error deleting floor" });
@@ -56,7 +56,7 @@ adminRouter.delete("/shops/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    await pool.execute("DELETE FROM shops WHERE id = ?", [id]);
+    await pool.execute("DELETE FROM shop WHERE id = ?", [id]);
     res.status(200).json({ message: "Shop deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Error deleting shop" });
@@ -69,7 +69,7 @@ adminRouter.put("/shops/:id/floor", async (req: Request, res: Response) => {
   const { floorId } = req.body;
 
   try {
-    await pool.execute("UPDATE shops SET floorId = ? WHERE id = ?", [
+    await pool.execute("UPDATE shop SET floorId = ? WHERE id = ?", [
       floorId,
       id,
     ]);
@@ -85,7 +85,7 @@ adminRouter.put("/shops/:id/status", async (req: Request, res: Response) => {
   const { status } = req.body;
 
   try {
-    await pool.execute("UPDATE shops SET status = ? WHERE id = ?", [
+    await pool.execute("UPDATE shop SET status = ? WHERE id = ?", [
       status,
       id,
     ]);
@@ -101,7 +101,7 @@ adminRouter.put("/shops/:id/size", async (req: Request, res: Response) => {
   const { size } = req.body;
 
   try {
-    await pool.execute("UPDATE shops SET size = ? WHERE id = ?", [size, id]);
+    await pool.execute("UPDATE shop SET size = ? WHERE id = ?", [size, id]);
     res.status(200).json({ message: "Shop size updated successfully" });
   } catch (error) {
     res.status(500).json({ error: "Error updating shop size" });
@@ -114,7 +114,7 @@ adminRouter.put("/shops/:id/number", async (req: Request, res: Response) => {
   const { shopNumber } = req.body;
 
   try {
-    await pool.execute("UPDATE shops SET shopNumber = ? WHERE id = ?", [
+    await pool.execute("UPDATE shop SET shopNumber = ? WHERE id = ?", [
       shopNumber,
       id,
     ]);
@@ -216,7 +216,7 @@ adminRouter.post("/login", async (req: Request, res: Response) => {
 adminRouter.get("/shops/count", async (req: Request, res: Response) => {
   try {
     const [result] = await pool.execute<any>(
-      "SELECT COUNT(*) as totalShops FROM shops"
+      "SELECT COUNT(*) as totalShops FROM shop"
     );
     res.json({ totalShops: result[0].totalShops });
   } catch (error) {
@@ -228,7 +228,7 @@ adminRouter.get("/shops/count", async (req: Request, res: Response) => {
 adminRouter.get("/floors/count", async (req: Request, res: Response) => {
   try {
     const [result] = await pool.execute<any>(
-      "SELECT COUNT(*) as totalFloors FROM floors"
+      "SELECT COUNT(*) as totalFloors FROM floor"
     );
     res.json({ totalFloors: result[0].totalFloors });
   } catch (error) {
@@ -254,7 +254,7 @@ adminRouter.get(
   async (req: Request, res: Response) => {
     try {
       const [result] = await pool.execute<any>(
-        "SELECT COUNT(*) as availableShops FROM shops WHERE status = 'AVAILABLE'"
+        "SELECT COUNT(*) as availableShops FROM shop WHERE status = 'AVAILABLE'"
       );
       res.json({ availableShops: result[0].availableShops });
     } catch (error) {
@@ -267,7 +267,7 @@ adminRouter.get(
 adminRouter.get("/shops/sold/count", async (req: Request, res: Response) => {
   try {
     const [result] = await pool.execute<any>(
-      "SELECT COUNT(*) as soldShops FROM shops WHERE status = 'SOLD'"
+      "SELECT COUNT(*) as soldShops FROM shop WHERE status = 'SOLD'"
     );
     res.json({ soldShops: result[0].soldShops });
   } catch (error) {
@@ -282,7 +282,7 @@ adminRouter.put("/shops/:id", async (req: Request, res: Response) => {
 
   try {
     await pool.execute(
-      "UPDATE shops SET shopNumber = ?, size = ?, floorId = ? WHERE id = ?",
+      "UPDATE shop SET shopNumber = ?, size = ?, floorId = ? WHERE id = ?",
       [shopNumber, size, floorId, id]
     );
     res.status(200).json({ message: "Shop details updated successfully" });
@@ -295,7 +295,7 @@ adminRouter.put("/shops/:id", async (req: Request, res: Response) => {
 adminRouter.get("/shops/sold", async (req: Request, res: Response) => {
   try {
     const [soldShops] = await pool.execute<ResultSetHeader>(
-      "SELECT * FROM shops WHERE status = 'SOLD'"
+      "SELECT * FROM shop WHERE status = 'SOLD'"
     );
     res.status(200).json(soldShops);
   } catch (error) {

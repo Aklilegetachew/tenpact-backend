@@ -4,18 +4,19 @@ import { ResultSetHeader } from "mysql2";
 
 const salesRouter = Router();
 
-// Route for getting all available shops
+// Route for getting all available shop
 salesRouter.get("/shops", async (req: Request, res: Response) => {
   try {
     const [availableShops] = await pool.execute(
-      `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
-              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
-       FROM shops 
-       INNER JOIN floors ON shops.floorId = floors.id 
-       WHERE shops.status = 'AVAILABLE'`
+      `SELECT shop.id, shop.shopNumber, shop.size, shop.status, shop.createdAt, shop.updatedAt, 
+              floor.id AS floorId, floor.name AS floorName, floor.floorNumber 
+       FROM shop 
+       INNER JOIN floor ON shop.floorId = floor.id 
+       WHERE shop.status = 'AVAILABLE'`
     );
     res.status(200).json(availableShops);
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Error fetching available shops" });
   }
 });
@@ -26,10 +27,10 @@ salesRouter.get(
   async (req: Request, res: Response) => {
     try {
       const [shops] = await pool.execute<any>(
-        `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
-              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
-       FROM shops 
-       INNER JOIN floors ON shops.floorId = floors.id`
+        `SELECT shop.id, shop.shopNumber, shop.size, shop.status, shop.createdAt, shop.updatedAt, 
+              floor.id AS floorId, floor.name AS floorName, floor.floorNumber 
+       FROM shop 
+       INNER JOIN floor ON shop.floorId = floor.id`
       );
 
       // Group the shops by their floor number
@@ -56,7 +57,7 @@ salesRouter.get("/floors", async (req: Request, res: Response) => {
   try {
     const [floors] = await pool.execute(
       `SELECT id, name, floorNumber 
-       FROM floors`
+       FROM floor`
     );
     res.status(200).json(floors);
   } catch (error) {
@@ -68,10 +69,10 @@ salesRouter.get("/floors", async (req: Request, res: Response) => {
 salesRouter.get("/shops", async (req: Request, res: Response) => {
   try {
     const [shops] = await pool.execute(
-      `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
-              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
-       FROM shops 
-       INNER JOIN floors ON shops.floorId = floors.id`
+      `SELECT shop.id, shop.shopNumber, shop.size, shop.status, shop.createdAt, shop.updatedAt, 
+              floor.id AS floorId, floor.name AS floorName, floor.floorNumber 
+       FROM shop 
+       INNER JOIN floor ON shop.floorId = floor.id`
     );
     res.status(200).json(shops);
   } catch (error) {
@@ -83,11 +84,11 @@ salesRouter.get("/shops", async (req: Request, res: Response) => {
 salesRouter.get("/shops/available", async (req: Request, res: Response) => {
   try {
     const [availableShops] = await pool.execute(
-      `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
-              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
-       FROM shops 
-       INNER JOIN floors ON shops.floorId = floors.id 
-       WHERE shops.status = 'AVAILABLE'`
+      `SELECT shop.id, shop.shopNumber, shop.size, shop.status, shop.createdAt, shop.updatedAt, 
+              floor.id AS floorId, floor.name AS floorName, floor.floorNumber 
+       FROM shop 
+       INNER JOIN floor ON shop.floorId = floor.id 
+       WHERE shop.status = 'AVAILABLE'`
     );
     res.status(200).json(availableShops);
   } catch (error) {
@@ -101,11 +102,11 @@ salesRouter.get(
   async (req: Request, res: Response) => {
     try {
       const [availableShops] = await pool.execute<any>(
-        `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
-              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
-       FROM shops 
-       INNER JOIN floors ON shops.floorId = floors.id 
-       WHERE shops.status = 'AVAILABLE'`
+        `SELECT shop.id, shop.shopNumber, shop.size, shop.status, shop.createdAt, shop.updatedAt, 
+              floor.id AS floorId, floor.name AS floorName, floor.floorNumber 
+       FROM shop 
+       INNER JOIN floor ON shop.floorId = floor.id 
+       WHERE shop.status = 'AVAILABLE'`
       );
 
       // Group available shops by floor number
@@ -133,11 +134,11 @@ salesRouter.get(
   async (req: Request, res: Response) => {
     try {
       const [soldShops] = await pool.execute<any>(
-        `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
-              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
-       FROM shops 
-       INNER JOIN floors ON shops.floorId = floors.id 
-       WHERE shops.status = 'SOLD'`
+        `SELECT shop.id, shop.shopNumber, shop.size, shop.status, shop.createdAt, shop.updatedAt, 
+              floor.id AS floorId, floor.name AS floorName, floor.floorNumber 
+       FROM shop 
+       INNER JOIN floor ON shop.floorId = floor.id 
+       WHERE shop.status = 'SOLD'`
       );
 
       // Group sold shops by floor number
@@ -154,7 +155,7 @@ salesRouter.get(
     } catch (error) {
       res
         .status(500)
-        .json({ error: "Failed to fetch sold shops grouped by floor." });
+        .json({ error: "Failed to fetch sold shop grouped by floor." });
     }
   }
 );
