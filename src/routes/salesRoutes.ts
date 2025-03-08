@@ -1,17 +1,19 @@
 import { Router, Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import { ShopResponse } from "../types";
+import pool from "../db"; // Import the MySQL connection pool
+import { ResultSetHeader } from "mysql2";
 
-const prisma = new PrismaClient();
 const salesRouter = Router();
 
 // Route for getting all available shops
 salesRouter.get("/shops", async (req: Request, res: Response) => {
   try {
-    const availableShops = await prisma.shop.findMany({
-      where: { status: "AVAILABLE" }, // Only available shops
-      include: { floor: true }, // Include floor information with the shop
-    });
+    const [availableShops] = await pool.execute(
+      `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
+              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
+       FROM shops 
+       INNER JOIN floors ON shops.floorId = floors.id 
+       WHERE shops.status = 'AVAILABLE'`
+    );
     res.status(200).json(availableShops);
   } catch (error) {
     res.status(500).json({ error: "Error fetching available shops" });
@@ -23,25 +25,23 @@ salesRouter.get(
   "/shops/grouped-by-floor",
   async (req: Request, res: Response) => {
     try {
-      // Fetch all shops with the related floor information
-      const shops = await prisma.shop.findMany({
-        include: {
-          floor: true, // Include the related floor info
-        },
-      });
+      const [shops] = await pool.execute<any>(
+        `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
+              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
+       FROM shops 
+       INNER JOIN floors ON shops.floorId = floors.id`
+      );
 
       // Group the shops by their floor number
-      const groupedShops = shops.reduce((acc: any, shop) => {
-        // Check if the floor already exists in the accumulator
-        const floorNumber = shop.floor.floorNumber;
+      const groupedShops = shops.reduce((acc: any, shop: any) => {
+        const floorNumber = shop.floorNumber;
         if (!acc[floorNumber]) {
-          acc[floorNumber] = []; // If not, initialize an empty array
+          acc[floorNumber] = [];
         }
-        acc[floorNumber].push(shop); // Push the shop to the corresponding floor array
+        acc[floorNumber].push(shop);
         return acc;
       }, {});
 
-      // Return the grouped shops
       res.status(200).json(groupedShops);
     } catch (error) {
       res
@@ -51,44 +51,44 @@ salesRouter.get(
   }
 );
 
-
 // Show all floors
 salesRouter.get("/floors", async (req: Request, res: Response) => {
   try {
-    const floors = await prisma.floor.findMany();
+    const [floors] = await pool.execute(
+      `SELECT id, name, floorNumber 
+       FROM floors`
+    );
     res.status(200).json(floors);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch floors." });
   }
 });
 
-
 // Show all shops
 salesRouter.get("/shops", async (req: Request, res: Response) => {
   try {
-    const shops = await prisma.shop.findMany({
-      include: {
-        floor: true, // Include the related floor information
-      },
-    });
+    const [shops] = await pool.execute(
+      `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
+              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
+       FROM shops 
+       INNER JOIN floors ON shops.floorId = floors.id`
+    );
     res.status(200).json(shops);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch shops." });
   }
 });
 
-
 // Show available shops
 salesRouter.get("/shops/available", async (req: Request, res: Response) => {
   try {
-    const availableShops = await prisma.shop.findMany({
-      where: {
-        status: "AVAILABLE",
-      },
-      include: {
-        floor: true, // Include the related floor information
-      },
-    });
+    const [availableShops] = await pool.execute(
+      `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
+              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
+       FROM shops 
+       INNER JOIN floors ON shops.floorId = floors.id 
+       WHERE shops.status = 'AVAILABLE'`
+    );
     res.status(200).json(availableShops);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch available shops." });
@@ -96,63 +96,67 @@ salesRouter.get("/shops/available", async (req: Request, res: Response) => {
 });
 
 // Show available shops grouped by floor number
-salesRouter.get("/shops/available/grouped-by-floor", async (req: Request, res: Response) => {
-  try {
-    const availableShops = await prisma.shop.findMany({
-      where: {
-        status: "AVAILABLE",
-      },
-      include: {
-        floor: true, // Include the related floor information
-      },
-    });
+salesRouter.get(
+  "/shops/available/grouped-by-floor",
+  async (req: Request, res: Response) => {
+    try {
+      const [availableShops] = await pool.execute<any>(
+        `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
+              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
+       FROM shops 
+       INNER JOIN floors ON shops.floorId = floors.id 
+       WHERE shops.status = 'AVAILABLE'`
+      );
 
-    // Group available shops by floor number
-    const groupedShops = availableShops.reduce((acc: any, shop) => {
-      const floorNumber = shop.floor.floorNumber;
-      if (!acc[floorNumber]) {
-        acc[floorNumber] = [];
-      }
-      acc[floorNumber].push(shop);
-      return acc;
-    }, {});
+      // Group available shops by floor number
+      const groupedShops = availableShops.reduce((acc: any, shop: any) => {
+        const floorNumber = shop.floorNumber;
+        if (!acc[floorNumber]) {
+          acc[floorNumber] = [];
+        }
+        acc[floorNumber].push(shop);
+        return acc;
+      }, {});
 
-    res.status(200).json(groupedShops);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch available shops grouped by floor." });
+      res.status(200).json(groupedShops);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Failed to fetch available shops grouped by floor." });
+    }
   }
-});
+);
 
-// Show sold rooms grouped by floor number
-salesRouter.get("/shops/sold/grouped-by-floor", async (req: Request, res: Response) => {
-  try {
-    const soldShops = await prisma.shop.findMany({
-      where: {
-        status: "SOLD",
-      },
-      include: {
-        floor: true, // Include the related floor information
-      },
-    });
+// Show sold shops grouped by floor number
+salesRouter.get(
+  "/shops/sold/grouped-by-floor",
+  async (req: Request, res: Response) => {
+    try {
+      const [soldShops] = await pool.execute<any>(
+        `SELECT shops.id, shops.shopNumber, shops.size, shops.status, shops.createdAt, shops.updatedAt, 
+              floors.id AS floorId, floors.name AS floorName, floors.floorNumber 
+       FROM shops 
+       INNER JOIN floors ON shops.floorId = floors.id 
+       WHERE shops.status = 'SOLD'`
+      );
 
-    // Group sold shops by floor number
-    const groupedSoldShops = soldShops.reduce((acc: any, shop) => {
-      const floorNumber = shop.floor.floorNumber;
-      if (!acc[floorNumber]) {
-        acc[floorNumber] = [];
-      }
-      acc[floorNumber].push(shop);
-      return acc;
-    }, {});
+      // Group sold shops by floor number
+      const groupedSoldShops = soldShops.reduce((acc: any, shop: any) => {
+        const floorNumber = shop.floorNumber;
+        if (!acc[floorNumber]) {
+          acc[floorNumber] = [];
+        }
+        acc[floorNumber].push(shop);
+        return acc;
+      }, {});
 
-    res.status(200).json(groupedSoldShops);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch sold rooms grouped by floor." });
+      res.status(200).json(groupedSoldShops);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ error: "Failed to fetch sold shops grouped by floor." });
+    }
   }
-});
-
-
-
-
+);
 
 export default salesRouter;
