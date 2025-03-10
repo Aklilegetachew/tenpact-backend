@@ -5,19 +5,21 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../db";
 import { ResultSetHeader } from "mysql2";
+import cuid from "cuid";
 
 const adminRouter = Router();
 
 // Route for adding a new Floor
 adminRouter.post("/floors", async (req: Request, res: Response) => {
   const { name, floorNumber } = req.body;
+  const id = cuid(); // Generate a unique CUID
 
   try {
     const [result] = await pool.execute<ResultSetHeader>(
-      "INSERT INTO floor (name, floorNumber) VALUES (?, ?)",
-      [name, floorNumber]
+      "INSERT INTO floor (id, name, floorNumber) VALUES (?, ?, ?)",
+      [id, name, floorNumber]
     );
-    res.status(201).json({ id: result.insertId, name, floorNumber });
+    res.status(201).json({ id, name, floorNumber });
   } catch (error) {
     res.status(500).json({ error: "Error creating floor" });
   }
@@ -26,14 +28,15 @@ adminRouter.post("/floors", async (req: Request, res: Response) => {
 // Route for adding a new Shop
 adminRouter.post("/shops", async (req: Request, res: Response) => {
   const { shopNumber, size, floorId } = req.body;
-
+  const id = cuid(); // Generate a unique CUID
   try {
     const [result] = await pool.execute<ResultSetHeader>(
-      "INSERT INTO shop (shopNumber, size, floorId) VALUES (?, ?, ?)",
-      [shopNumber, size, floorId]
+      "INSERT INTO shop (id, shopNumber, size, floorId) VALUES (?, ?, ?, ?)",
+      [id, shopNumber, size, floorId]
     );
     res.status(201).json({ id: result.insertId, shopNumber, size, floorId });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Error creating shop" });
   }
 });
@@ -83,12 +86,10 @@ adminRouter.put("/shops/:id/floor", async (req: Request, res: Response) => {
 adminRouter.put("/shops/:id/status", async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
-
+  console.log(status);
+  console.log(id);
   try {
-    await pool.execute("UPDATE shop SET status = ? WHERE id = ?", [
-      status,
-      id,
-    ]);
+    await pool.execute("UPDATE shop SET status = ? WHERE id = ?", [status, id]);
     res.status(200).json({ message: "Shop status updated successfully" });
   } catch (error) {
     res.status(500).json({ error: "Error updating shop status" });
@@ -128,11 +129,11 @@ adminRouter.put("/shops/:id/number", async (req: Request, res: Response) => {
 adminRouter.post("/users", async (req: Request, res: Response) => {
   const { email, password, role } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
-
+  const id = cuid();
   try {
     const [result] = await pool.execute<ResultSetHeader>(
-      "INSERT INTO users (email, password, role) VALUES (?, ?, ?)",
-      [email, hashedPassword, role]
+      "INSERT INTO user (id, email, password, role) VALUES (?, ?, ?, ?)",
+      [id, email, hashedPassword, role]
     );
     res.status(201).json({ id: result.insertId, email, role });
   } catch (error) {
@@ -143,7 +144,7 @@ adminRouter.post("/users", async (req: Request, res: Response) => {
 // Get All Users (Admin only)
 adminRouter.get("/users", async (req: Request, res: Response) => {
   try {
-    const [users] = await pool.execute("SELECT * FROM users");
+    const [users] = await pool.execute("SELECT * FROM user");
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: "Error fetching users" });
@@ -156,7 +157,7 @@ adminRouter.put("/users/:id/role", async (req: Request, res: Response) => {
   const { role } = req.body;
 
   try {
-    await pool.execute("UPDATE users SET role = ? WHERE id = ?", [role, id]);
+    await pool.execute("UPDATE user SET role = ? WHERE id = ?", [role, id]);
     res.status(200).json({ message: "User role updated successfully" });
   } catch (error) {
     res.status(500).json({ error: "Error updating user role" });
@@ -168,7 +169,7 @@ adminRouter.delete("/users/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    await pool.execute("DELETE FROM users WHERE id = ?", [id]);
+    await pool.execute("DELETE FROM user WHERE id = ?", [id]);
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Error deleting user" });
@@ -181,7 +182,7 @@ adminRouter.post("/login", async (req: Request, res: Response) => {
 
   try {
     const [users] = await pool.execute<any[]>(
-      "SELECT * FROM users WHERE email = ?",
+      "SELECT * FROM user WHERE email = ?",
       [email]
     );
 
@@ -208,6 +209,7 @@ adminRouter.post("/login", async (req: Request, res: Response) => {
 
     res.status(200).json({ token });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -240,7 +242,7 @@ adminRouter.get("/floors/count", async (req: Request, res: Response) => {
 adminRouter.get("/users/count", async (req: Request, res: Response) => {
   try {
     const [result] = await pool.execute<any>(
-      "SELECT COUNT(*) as totalUsers FROM users"
+      "SELECT COUNT(*) as totalUsers FROM user"
     );
     res.json({ totalUsers: result[0].totalUsers });
   } catch (error) {
